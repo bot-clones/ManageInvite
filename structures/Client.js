@@ -2,7 +2,7 @@ const { Client, Collection } = require("discord.js"),
     util = require("util"),
     path = require("path");
 
-const DatabaseHandler = require("../helpers/database");
+const DatabaseHandler = require("../database");
 
 // Creates ManageInvite class
 class ManageInvite extends Client {
@@ -12,11 +12,12 @@ class ManageInvite extends Client {
         // Config
         this.config = require("../config"); // Load the config file
         this.permLevels = require("../helpers/permissions"); // Load permissions file
+        this.enabledLanguages = require("../languages.json"); // Load languages file
         // Commands
         this.commands = new Collection(); // Creates new commands collection
         this.aliases = new Collection(); // Creates new command aliases collection
         // Utils
-        this.logger = require("../helpers/logger"); // Load the logger file
+        this.log = require("../helpers/logger");
         this.functions = require("../helpers/functions"); // Load the functions filec
         this.wait = util.promisify(setTimeout); // client.wait(1000) - Wait 1 second
         // Invitations data
@@ -55,6 +56,7 @@ class ManageInvite extends Client {
             });
             return false;
         } catch (e) {
+            console.error(e);
             return `Unable to load command ${commandName}: ${e}`;
         }
     }

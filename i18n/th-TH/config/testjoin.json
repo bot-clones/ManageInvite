@@ -1,0 +1,7 @@
+{
+    "TITLE": ":wrench: ระบบเข้าร่วม :",
+    "ENABLED_YES_CONTENT": "{{success}} เปิดใช้งานข้อความเข้าร่วม ปิดการใช้งานด้วย `{{prefix}}setjoin`",
+    "ENABLED_NO_CONTENT": "{{error}} ปิดใช้งานข้อความเข้าร่วม เปิดใช้งานด้วย `{{prefix}}setjoin`",
+    "CHANNEL_CONTENT": "ไม่ได้กำหนดช่อง ตั้งค่าด้วย `{{prefix}}configjoin`!",
+    "MESSAGE_CONTENT": "ไม่ได้กำหนดข้อความ ตั้งค่าด้วย `{{prefix}}configjoin`!"
+}

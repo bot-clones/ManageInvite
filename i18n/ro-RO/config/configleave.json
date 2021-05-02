@@ -1,7 +1,7 @@
 {
     "DISABLE": "Scrie `{{prefix}}setleave` pentru a dezactiva mesajele de iesire",
-    "INSTRUCTIONS_1": "__**Mai multe informatii**__\n```\n{user} : Mențiunea membrului care tocmai a iesit de pe serverul dvs.\n{user.name} : Numele membrului care tocmai a iesit de pe serverul dvs.\n{user.tag} : Eticheta membrului care tocmai a iesit de pe serverul dvs.\n{user.createdat} : Vârsta contului membrului.\n{user.id} : ID-ul membrului.\n{numJoins} : Numărul de înscrieri ale membrului.\n\n{guild} : Numele serverului.\n{guild.count} : Numărul de membri ai serverului dvs. acum.\n\n{inviter} : Mențiunea invitatorului.\n{inviter.name} : Numele invitatorului.\n{inviter.tag} : Eticheta invitatorului.\n{inviter.invites} : Numărul total de invitații numarate invitatorului.\n{inviter.id} : ID-ul invitatorului.\n\n{invite.code} : Codul de invitație utilizat.\n{invite.url} : Invitatia URL utilizată.\n{invite.uses} : Numărul de utilizări ale invitației utilizate.\n```\nScrie `cancel` pentru a abandona. {{string}}\n\n\n:pencil: **| Acum scrieti mesajul de iesire... :pencil2:**",
-    "INSTRUCTIONS_2": ":scroll: **| Acum scrie numele canalului de iesire sau mentioneaza-l... :pencil2:**",
+    "INSTRUCTIONS_1": "__**More informations**__\n```{{variables}}```\nSend `cancel` to cancel. {{string}}\n\n:sparkles: Embed messages are now available! You can generate an embed here: <https://embed-generator.manage-invite.xyz/> and send the json code below!\n\n\n:pencil: **| Now send the leave message... :pencil2:**",
+    "INSTRUCTIONS_2": ":scroll: **| Now send the leave channel name or mention it... :pencil2:**",
     "TITLE": "**S-a terminat configurarea mesajului de iesire**",
     "TEST": "Foloseste `{{prefix}}testleave` pentru a teste noul mesaj.",
     "CHANNEL_NOT_FOUND": "Nici un canal gasit pentru `{{channel}}`"

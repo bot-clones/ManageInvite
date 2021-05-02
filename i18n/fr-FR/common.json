@@ -21,8 +21,8 @@
   "YES": "Oui",
   "CANCEL": "Annuler",
   "MAIN": "Main",
-  "BOTS": "Bots",
-  "VANITY_URL": "Vanity URL",
-  "UNKNOWN": "Unknown",
-  "USES": "Uses"
+  "BOTS": "Robots",
+  "VANITY_URL": "URL personnalisée",
+  "UNKNOWN": "Inconnu",
+  "USES": "Utilisations"
 }

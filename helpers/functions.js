@@ -2,8 +2,9 @@ const config = require("../config");
 
 const fetch = require("node-fetch"),
     moment = require("moment"),
-    date = require("date-and-time"),
     Discord = require("discord.js");
+
+const variables = require("./variables");
 
 const stringOrNull = (string) => string ? `'${string}'` : "null";
 const pgEscape = (string) => string ? string.replace(/'/g, "''") : null;
@@ -21,8 +22,7 @@ const asyncForEach = async (array, callback) => {
 const syncPremiumRoles = (client) => {
     client.shard.broadcastEval(() => {
         if (this.guilds.cache.has(client.config.supportServer)){
-            this.database.query("SELECT * FROM payments WHERE type = 'paypal_dash_pmnt_month' OR type = 'email_address_pmnt_month'").then(({ rows }) => {
-                const userIDs = rows.map((r) => r.payer_discord_id);
+            this.database.fetchPremiumUserIDs().then((userIDs) => {
                 const guild = this.guilds.cache.get(this.config.supportServer);
                 userIDs
                     .filter((r) => guild.members.cache.has(r) && !guild.members.cache.get(r).roles.cache.has(this.config.premiumRole))
@@ -37,36 +37,32 @@ const syncPremiumRoles = (client) => {
  * @param {object} member The member who joined/has left
  * @param {string} locale The moment locale to use
  * @param {object} invData Data related to the invite and inviter
- * @returns {string} The formatted string
+ * @returns {string|MessageEmbed} The formatted string or embed
  */
-const formatMessage = (message, member, locale, invData) => {
+const formatMessage = (message, member, numberOfJoins, locale, invData) => {
+
     moment.locale(locale);
-    message = message
-        .replace(/{user}/g, member.toString())
-        .replace(/{user.name}/g, member.user.username)
-        .replace(/{user.tag}/g, member.user.tag)
-        .replace(/{user.createdat}/g, moment(member.user.createdAt, "YYYYMMDD").fromNow())
-        .replace(/{user.id}/g, member.user.id)
-        .replace(/{guild}/g, member.guild.name)
-        .replace(/{guild.count}/g, member.guild.memberCount)
-        .replace(/{server}/g, member.guild.name)
-        .replace(/{server.count}/g, member.guild.name);
 
-    if (invData){
-        const { inviter, inviterData, invite, numJoins } = invData;
-        message = message.replace(/{inviter}/g, inviter.toString())
-            .replace(/{inviter.tag}/g, inviter.tag)
-            .replace(/{inviter.name}/g, inviter.username)
-            .replace(/{inviter.id}/g, inviter.id)
-            .replace(/{inviter.invites}/g, inviterData.regular + inviterData.bonus - inviterData.fake - inviterData.leaves)
-            .replace(/{invite.code}/g, invite.code)
-            .replace(/{invite.uses}/g, invite.uses)
-            .replace(/{invite.url}/g, invite.url)
-            .replace(/{invite.channel}/g, invite.channel)
-            .replace(/{numJoins}/g, numJoins);
+    variables.forEach((variable) => {
+        if (variable.requireInviter && !invData) return;
+        const matches = [variable.name, variable.aliases].flat();
+        matches.forEach((match) => {
+            message = message.replaceAll(`{${match}}`, variable.display(member, numberOfJoins, invData, moment));
+        });
+    });
+
+    let data;
+    let embed;
+    try {
+        const embedData = JSON.parse(message.substr(0, 10000));
+        embed = true;
+        data = embedData;
+    } catch (e) {
+        embed = false;
+        data = message.substr(0, 2000);
     }
-
-    return message;
+    
+    return embed ? { embed: data } : data;
     
 };
 
@@ -150,7 +146,7 @@ const postTopStats = async (client) => {
     const shard_id = client.shard.ids[0];
     const shard_count = client.shard.count;
     const server_count = client.guilds.cache.size;
-    const headers = { "content-type": "application/json", "authorization": client.config.topToken };
+    const headers = { "content-type": "application/json", authorization: client.config.topToken };
     const options = {
         method: "POST",
         body: JSON.stringify({ shard_id, shard_count, server_count }),
@@ -158,8 +154,8 @@ const postTopStats = async (client) => {
     };
     fetch("https://discordbots.org/api/bots/stats", options).then(async (res) => {
         const json = await res.json();
-        if (!res.error) client.logger.log("Top.gg stats successfully posted.", "log");
-        else client.logger.log("Top.gg stats cannot be posted. Error: "+json.error, "error");
+        if (!res.error) client.log("Top.gg stats successfully posted.", "log");
+        else client.log("Top.gg stats cannot be posted. Error: "+json.error, "error");
     });
 };
 
@@ -273,9 +269,8 @@ const isEqual = (value, other) => {
  * @param {string} locale 
  */
 const formatDate = (dateToFormat, format, locale) => {
-    if (locale !== "en-US") require("date-and-time/locale/"+locale.substr(0, 2));
-    date.locale(locale.substr(0, 2));
-    return date.format(dateToFormat, format);
+    moment.locale(locale.substr(0, 2));
+    return moment(dateToFormat).format(format);
 };
 
 /**

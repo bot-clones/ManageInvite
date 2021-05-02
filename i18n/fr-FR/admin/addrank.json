@@ -1,6 +1,6 @@
 {
-    "MISSING_COUNT": "Vous devez spécifier le nombre d'invitations nécessaires pour obtenir le grade. (Syntaxe : {{prefix}}addrank nombre @rôle)",
-    "INCORRECT_COUNT": " Vous devez spécifier un nombre __**valide**__ d'invitations requises pour obtenir le grade. (Syntaxe : {{prefix}}addrank nombre @rôle)",
+    "MISSING_COUNT": "Vous devez préciser le nombre d'invitations nécessaires pour obtenir le grade. (Syntaxe : {{prefix}}addrank nombre @rôle)",
+    "INCORRECT_COUNT": " Vous devez préciser un nombre __**valide**__ d'invitations requises pour obtenir le grade. (Syntaxe : {{prefix}}addrank nombre @rôle)",
     "ALREADY_EXIST": "Il existe déjà un rôle défini pour  **{{count}}** invitations (`{{roleName}}`) ! Supprimez-le avec `{{prefix}}removerank {{roleID}}` puis essayez à nouveau !",
     "MISSING_ROLE": "Vous devez mentionner le rôle que vous souhaitez ajouter lorsque le nombre d'invitations est atteint ! (Syntaxe : {{prefix}}addrank nombre @rôle)",
     "ALREADY_USED": "Ce rôle est déjà utilisé pour **{{count}}** invitations ! Enlevez-le avec `{{{prefix}}removerank {{roleID}}` puis réessayez !",

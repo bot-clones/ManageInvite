@@ -1,0 +1,5 @@
+{
+    "AUTHOR_CONTENT": "คุณมี **{{inviteCount}}** invites! (**{{regularCount}}** regular, **{{bonusCount}}** bonus, **{{fakeCount}}** fake, **{{leavesCount}}** leaves)",
+    "AUTHOR_NEXT_RANK": "คุณต้องการอีก **{{neededCount}}** คำเชิญเพื่อรับบทบาทต่อไป: **{{rankName}}**!",
+    "MEMBER_CONTENT": "**{{username}}** has **{{inviteCount}}** invites! (**{{regularCount}}** regular, **{{bonusCount}}** bonus, **{{fakeCount}}** fake, **{{leavesCount}}** leaves)"
+}

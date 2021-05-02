@@ -102,7 +102,7 @@
                 <div class="box box-danger">
                     <div class="box-header with-border">
                         <h3 class="box-title"><%= translate("dashboard:JOIN_DM_TITLE") %></h3>
-                        <a target="_blank" href="https://docs.manage-invite.xyz/configuration/variables">
+                        <a target="_blank" href="https://new-docs.manage-invite.xyz/docs/guides/logs-messages#variables">
                             <button type="button" class="btn btn-info btn-sm pull-right swalDefaultInfo" data-toggle="tooltip" title data-original-title="Infos"><i class="fa fa-info"></i></button>
                         </a>
                     </div>
@@ -180,13 +180,36 @@
                         <% } %>
                     </div>
                 </div>
+                <div class="box box-warning">
+                    <div class="box-header with-border">
+                        <h3 class="box-title"><%= translate("dashboard:ROLE_REWARDS_BEHAVIOR") %></h3>
+                    </div>
+                    <!-- /.box-header -->
+                    <form role="form" action="/manage/<%= guild.id %>/ranks" method="POST">
+                        <div class="box-body">
+                            <div class="checkbox">
+                                <label>
+                                    <input type="checkbox" name="keep-ranks" <% if (guild.keepRanks) { %>checked<% } %>> <%= translate('dashboard:ROLE_REWARDS_BEHAVIOR_KEEP_RANKS') %>
+                                </label>
+                            </div>
+                            <div class="checkbox">
+                                <label>
+                                    <input type="checkbox" name="stacked-ranks" <% if (!guild.stackedRanks) { %>checked<% } %>> <%= translate('dashboard:ROLE_REWARDS_BEHAVIOR_STACKED_RANKS') %>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="box-footer">
+                            <button type="submit" class="btn btn-primary"><%= translate("common:UPDATE") %></button>
+                        </div>
+                    </form>
+                </div>
             </div>
             <div class="col-md-6">
                 <!-- JOIN CONFIGURATION -->
                 <div class="box box-danger">
                     <div class="box-header with-border">
                         <h3 class="box-title"><%= translate("dashboard:JOIN_TITLE") %></h3>
-                        <a target="_blank" href="https://docs.manage-invite.xyz/configuration/variables">
+                        <a target="_blank" href="https://new-docs.manage-invite.xyz/docs/guides/logs-messages#variables">
                             <button type="button" class="btn btn-info btn-sm pull-right swalDefaultInfo" data-toggle="tooltip" title data-original-title="Infos"><i class="fa fa-info"></i></button>
                         </a>
                     </div>
@@ -264,7 +287,7 @@
                 <div class="box box-danger">
                     <div class="box-header with-border">
                         <h3 class="box-title"><%= translate("dashboard:LEAVE_TITLE") %></h3>
-                        <a target="_blank" href="https://docs.manage-invite.xyz/configuration/variables">
+                        <a target="_blank" href="https://new-docs.manage-invite.xyz/docs/guides/logs-messages#variables">
                             <button type="button" class="btn btn-info btn-sm pull-right swalDefaultInfo" data-toggle="tooltip" title data-original-title="Infos"><i class="fa fa-info"></i></button>
                         </a>
                     </div>
@@ -386,6 +409,7 @@
 </div>
 <script>
     $("a").click( function(e) {
+        if (!e.target.attributes.href.value.includes('_')) return;
         e.preventDefault();
         if(e.target.attributes.href.value.startsWith('#tab')){
             const data = e.target.attributes.href.value.split('_');

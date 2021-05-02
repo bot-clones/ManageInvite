@@ -1,5 +1,6 @@
 const Command = require("../../structures/Command.js"),
-    Discord = require("discord.js");
+    Discord = require("discord.js"),
+    Constants = require("../../helpers/constants");
 
 module.exports = class extends Command {
     constructor (client) {
@@ -13,22 +14,25 @@ module.exports = class extends Command {
     }
 
     async run (message, args, data) {
+
+        const guildPlugins = await this.client.database.fetchGuildPlugins(message.guild.id);
+        const plugin = guildPlugins.find((p) => p.pluginName === "leave")?.pluginData;
    
         const embed = new Discord.MessageEmbed()
             .setTitle(message.translate("config/testleave:TITLE"))
             .setDescription(message.translate("config/testleave:DESCRIPTION"))
-            .addField(message.translate("config/testleave:ENABLED_TITLE"), (data.guild.leave.enabled ? message.translate("config/testleave:ENABLED_YES_CONTENT", {
-                prefix: data.guild.prefix,
-                success: this.client.config.emojis.success
+            .addField(message.translate("config/testleave:ENABLED_TITLE"), (plugin?.enabled ? message.translate("config/testleave:ENABLED_YES_CONTENT", {
+                prefix: message.guild.settings.prefix,
+                success: Constants.Emojis.SUCCESS
             }) : message.translate("config/testleave:ENABLED_NO_CONTENT", {
-                prefix: data.guild.prefix,
-                success: this.client.config.emojis.success
+                prefix: message.guild.settings.prefix,
+                success: Constants.Emojis.SUCCESS
             })))
-            .addField(message.translate("config/testleave:MESSAGE"), (data.guild.leave.mainMessage || message.translate("config/testleave:ENABLED_YES_CONTENT", {
-                prefix: data.guild.prefix
+            .addField(message.translate("config/testleave:MESSAGE"), (plugin?.mainMessage || message.translate("config/testleave:ENABLED_YES_CONTENT", {
+                prefix: message.guild.settings.prefix
             })))
-            .addField(message.translate("config/testleave:CHANNEL_TITLE"), (data.guild.leave.channel ? `<#${data.guild.leave.channel}>` : message.translate("config/testleave:CHANNEL_CONTENT", {
-                prefix: data.guild.prefix
+            .addField(message.translate("config/testleave:CHANNEL_TITLE"), (plugin?.channel ? `<#${plugin.channel}>` : message.translate("config/testleave:CHANNEL_CONTENT", {
+                prefix: message.guild.settings.prefix
             })))
             .setThumbnail(message.author.avatarURL())
             .setColor(data.color)
@@ -36,11 +40,12 @@ module.exports = class extends Command {
             .setTimestamp();
         message.channel.send(embed);
         
-        if (data.guild.leave.enabled && data.guild.leave.mainMessage && data.guild.leave.channel && message.guild.channels.cache.get(data.guild.leave.channel)){
-            message.guild.channels.cache.get(data.guild.leave.channel).send(this.client.functions.formatMessage(
-                data.guild.leave.mainMessage,
+        if (plugin?.enabled && plugin.mainMessage && plugin.channel && message.guild.channels.cache.get(plugin.channel)){
+            message.guild.channels.cache.get(plugin.channel).send(this.client.functions.formatMessage(
+                plugin.mainMessage,
                 message.member,
-                (data.guild.language || "english").substr(0, 2),
+                1,
+                (message.guild.settings.language || "english").substr(0, 2),
                 {
                     inviter: message.client.user,
                     inviterData: {
@@ -52,7 +57,8 @@ module.exports = class extends Command {
                     invite: {
                         code: "436SPZX",
                         url: "https://discord.gg/436SPZX",
-                        uses: 1
+                        uses: 1,
+                        channel: message.channel
                     }
                 }                
             )).catch(() => {

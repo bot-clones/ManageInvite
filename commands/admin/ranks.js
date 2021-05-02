@@ -1,6 +1,6 @@
 const Command = require("../../structures/Command.js"),
     Discord = require("discord.js"),
-    Constants = require("../../Constants");
+    Constants = require("../../helpers/constants");
 
 module.exports = class extends Command {
     constructor (client) {
@@ -14,16 +14,18 @@ module.exports = class extends Command {
     }
 
     async run (message, args, data) {
+
+        const guildRanks = await this.client.database.fetchGuildRanks(message.guild.id);
         
         const embed = new Discord.MessageEmbed()
             .setColor(data.color)
             .setFooter(data.footer);
 
-        const ranks = data.guild.ranks.sort((a,b) => b.inviteCount - a.inviteCount);
+        const ranks = guildRanks.sort((a,b) => b.inviteCount - a.inviteCount);
         if (ranks.length === 0){
             embed.setAuthor(message.translate("admin/ranks:NO_RANK_TITLE"))
                 .setDescription(message.translate("admin/ranks:NO_RANK_CONTENT", {
-                    prefix: data.guild.prefix
+                    prefix: message.guild.settings.prefix
                 }));
             return message.channel.send(embed);
         }

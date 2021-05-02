@@ -1,8 +1,8 @@
 {
     "env": {
         "commonjs": true,
-        "es6": true,
-        "node": true
+        "node": true,
+        "es6": true
     },
     "extends": "eslint:recommended",
     "globals": {
@@ -48,6 +48,7 @@
                 "after": true
             }
         ],
+        "quote-props": ["error", "as-needed"],
         "require-atomic-updates": 0,
         "no-async-promise-executor": 0
     }

@@ -7,15 +7,33 @@ module.exports = class {
 
     async run (member) {
 
+        const startAt = Date.now();
+        let logMessage = "----------\n";
+
         if (!this.client.fetched) return;
-        console.log("Calculating for member "+member.id);
+        logMessage += `Join of ${member.user.tag} | (${member.id})\n`;
+        logMessage += `Guild: ${member.guild.id}\n`;
 
+        const guildSubscriptions = await this.client.database.fetchGuildSubscriptions(member.guild.id);
+        const isPremium = guildSubscriptions.some((sub) => new Date(sub.expiresAt).getTime() > Date.now());
+        if (!isPremium) return;
+
+        const fetchGuildStartAt = Date.now();
         // Fetch guild and member data from the db
-        const guildData = await this.client.database.fetchGuild(member.guild.id);
-        if (!guildData.premium) return;
+        const [
+            guildSettings,
+            guildBlacklistedUsers,
+            guildRanks,
+            guildPlugins
+        ] = await Promise.all([
+            this.client.database.fetchGuildSettings(member.guild.id),
+            this.client.database.fetchGuildBlacklistedUsers(member.guild.id),
+            this.client.database.fetchGuildRanks(member.guild.id),
+            this.client.database.fetchGuildPlugins(member.guild.id)
+        ]);
+        logMessage += `Fetch guild data: ${Date.now()-fetchGuildStartAt}ms\n`;
 
-        member.guild.data = guildData;
-        const memberData = await this.client.database.fetchMember(member.id, member.guild.id);
+        member.guild.settings = guildSettings;
         
         /* Find who is the inviter */
 
@@ -62,60 +80,109 @@ module.exports = class {
             }
         }
 
+        logMessage += `Vanity: ${vanity}\nInvite: ${!!invite}\nPerm: ${perm}\n`;
 
         const inviter = invite && invite.inviter ? await this.client.resolveUser(invite.inviter.id) : null;
-        const inviterData = inviter ? await this.client.database.fetchMember(inviter.id, member.guild.id) : null;
+        const inviterData = inviter ? await this.client.database.fetchGuildMember({
+            userID: inviter.id,
+            guildID: member.guild.id,
+            storageID: guildSettings.storageID
+        }) : null;
 
-        if (inviter && guildData.blacklistedUsers.includes(inviter.id)) return;
+        const fetchEventsStartAt = Date.now();
+        const [inviterEvents, memberEvents] = await Promise.all([
+            inviter ? this.client.database.fetchGuildMemberEvents({
+                userID: inviter.id,
+                guildID: member.guild.id 
+            }) : null,
+            this.client.database.fetchGuildMemberEvents({
+                userID: member.id,
+                guildID: member.guild.id
+            })
+        ]);
+        logMessage += `Fetch guild data: ${Date.now()-fetchEventsStartAt}ms\n`;
+
+        if (inviter && guildBlacklistedUsers.includes(inviter.id)) {
+            logMessage += "Blacklisted: true\n----------";
+            console.log(logMessage);
+            return;
+        }
 
         // If we know who invited the member
         if (invite){
+
+            if (inviterData.notCreated) await this.client.database.createGuildMember({
+                userID: inviter.id,
+                guildID: member.guild.id,
+                storageID: guildSettings.storageID
+            });
+
             // We look for the member in the server members
             const inviterMember = member.guild.members.cache.get(inviter.id) || await member.guild.members.fetch(inviter.id).catch(() => {});
-            /* If it does exist
-            if(inviterMember){
 
+            let joinFake = false;
+
+            if (inviterMember) {
                 // If the member had previously invited this member and they have left
-                if(inviterData.invitedUsersLeft.includes(member.id)){
-                    // It is removed from the invited members
-                    inviterData.removeInvitedUserLeft(member.id);
-                    // We're removing a leave
+                const lastJoinData = inviterEvents.filter((j) => j.eventType === "join" && j.guildID === member.guild.id && j.inviterID === inviterMember.id && j.userID === member.id && j.storageID === guildSettings.storageID)[0];
+                if (lastJoinData){
+                    this.client.database.addInvites({
+                        userID: inviter.id,
+                        guildID: member.guild.id,
+                        storageID: guildSettings.storageID,
+                        number: -1,
+                        type: "leaves"
+                    });
                     inviterData.leaves--;
-                }
-                // If the member had already invited this member before
-                if(inviterData.invitedUsers.includes(member.id)){
-                    // We increase the number of fake invitations
+                    this.client.database.addInvites({
+                        userID: inviter.id,
+                        guildID: member.guild.id,
+                        storageID: guildSettings.storageID,
+                        number: 1,
+                        type: "fake"
+                    });
                     inviterData.fake++;
-                    // We increase the number of regular invitations
-                    inviterData.regular++;
+                } else if (inviter.id === member.id) {
+                    this.client.database.addInvites({
+                        userID: inviter.id,
+                        guildID: member.guild.id,
+                        storageID: guildSettings.storageID,
+                        number: 1,
+                        type: "fake"
+                    });
+                    inviterData.fake++;
                 } else {
-                    // We increase the number of ordinary invitations
-                    inviterData.regular++;
-                    // We save that this member invited this member
-                    inviterData.addInvitedUser(member.id);
-                    if(inviter.id === member.id) inviterData.fake++;
+                    const fakeThreshold = guildSettings.fakeThreshold;
+                    if (fakeThreshold) {
+                        const inThreshold = (member.user.createdTimestamp + (fakeThreshold * 24 * 60 * 60 * 1000)) > Date.now();
+                        if (inThreshold) {
+                            joinFake = true;
+                            this.client.database.addInvites({
+                                userID: inviter.id,
+                                guildID: member.guild.id,
+                                storageID: guildSettings.storageID,
+                                number: 1,
+                                type: "fake"
+                            });
+                            inviterData.fake++;
+                        }
+                    }
                 }
-                
-            }*/
-
-            // If the member had previously invited this member and they have left
-            const lastJoinData = inviterData.invitedMemberEvents.filter((j) => j.type === "join" && j.guildID === member.guild.id && j.inviterID === inviterMember.id)[0];
-            if (lastJoinData){
-                inviterData.leaves--;
-                inviterData.fake++;
             }
-            
-            // or if the member invited himself
-            else if (inviter.id === member.id) {
-                inviterData.fake++;
-            }
+           
 
+            this.client.database.addInvites({
+                userID: inviter.id,
+                guildID: member.guild.id,
+                storageID: guildSettings.storageID,
+                number: 1,
+                type: "regular"
+            });
             inviterData.regular++;
 
-            if (inviterMember) await this.client.functions.assignRanks(inviterMember, inviterData.calculatedInvites, guildData.ranks, guildData.keepRanks, guildData.stackedRanks);
+            if (inviterMember) await this.client.functions.assignRanks(inviterMember, inviterData.invites, guildRanks, guildSettings.keepRanks, guildSettings.stackedRanks);
 
-            await inviterData.updateInvites();
-            await this.client.database.createEvent({
+            this.client.database.createGuildMemberEvent({
                 userID: member.id,
                 guildID: member.guild.id,
                 eventType: "join",
@@ -126,110 +193,141 @@ module.exports = class {
                     uses: invite.uses,
                     url: invite.url,
                     code: invite.code,
-                    inviter: inviter.id
-                }
+                    inviter: inviter.id,
+                    channel: invite.channel.toString()
+                },
+                joinFake,
+                storageID: guildSettings.storageID
             });
         } else if (oauth){
-            await this.client.database.createEvent({
+            this.client.database.createGuildMemberEvent({
                 userID: member.id,
                 guildID: member.guild.id,
                 eventType: "join",
                 eventDate: new Date(),
-                joinType: "oauth"
+                joinType: "oauth",
+                storageID: guildSettings.storageID
             });
         } else if (vanity){
-            await this.client.database.createEvent({
+            this.client.database.createGuildMemberEvent({
                 userID: member.id,
                 guildID: member.guild.id,
                 eventType: "join",
                 eventDate: new Date(),
-                joinType: "vanity"
+                joinType: "vanity",
+                storageID: guildSettings.storageID
             });
         } else if (perm){
-            await this.client.database.createEvent({
+            this.client.database.createGuildMemberEvent({
                 userID: member.id,
                 guildID: member.guild.id,
                 eventType: "join",
                 eventDate: new Date(),
-                joinType: "perm"
+                joinType: "perm",
+                storageID: guildSettings.storageID
             });
         } else {
-            await this.client.database.createEvent({
+            this.client.database.createGuildMemberEvent({
                 userID: member.id,
                 guildID: member.guild.id,
                 eventType: "join",
                 eventDate: new Date(),
-                joinType: "unknown"
+                joinType: "unknown",
+                storageID: guildSettings.storageID
             });
         }
 
-        /*if(invite){
-            await memberData.setJoinData({
-                type: "normal",
-                inviterID: inviter.id,
-                inviteData: {
-                    uses: invite.uses,
-                    url: invite.url,
-                    code: invite.code,
-                    inviter: inviter.id
-                }
-            });
-        } else if(oauth){
-            await memberData.setJoinData({
-                type: "oauth"
-            });
-        } else if(vanity){
-            await memberData.setJoinData({
-                type: "vanity"
-            });
-        }*/
-
+        const memberNumJoins = memberEvents.filter((e) => e.eventType === "join" && e.userID === member.id).length || 1;
+        const joinDM = guildPlugins.find((plugin) => plugin.pluginName === "joinDM")?.pluginData;
         // DM Join messages
-        if (guildData.joinDM.enabled && guildData.joinDM.mainMessage && guildData.premium){
+        if (joinDM?.enabled && joinDM.mainMessage){
             if (invite){
-                const formattedMessage = this.client.functions.formatMessage(guildData.joinDM.mainMessage, member, (guildData.language || "english").substr(0, 2), {
-                    inviter,
-                    inviterData,
-                    invite,
-                    numJoins: memberData.numJoins
-                });
+                const formattedMessage = this.client.functions.formatMessage(
+                    joinDM.mainMessage,
+                    member,
+                    memberNumJoins,
+                    (guildSettings.language || "english").substr(0, 2),
+                    {
+                        inviter,
+                        inviterData,
+                        invite
+                    });
                 member.send(formattedMessage).catch(() => {});
             } else if (vanity){
-                const formattedMessage = this.client.functions.formatMessage((guildData.joinDM.vanityMessage || member.guild.translate("misc:JOIN_DM_VANITY_DEFAULT")), member, (guildData.language || "english").substr(0, 2), null);
+                const formattedMessage = this.client.functions.formatMessage(
+                    (joinDM.vanityMessage || member.guild.translate("misc:JOIN_DM_VANITY_DEFAULT")),
+                    member,
+                    null,
+                    (guildSettings.language || "english").substr(0, 2),
+                    null
+                );
                 member.send(formattedMessage).catch(() => {});
             } else {
-                const formattedMessage = this.client.functions.formatMessage((guildData.joinDM.unknownMessage || member.guild.translate("misc:JOIN_DM_UNKNOWN_DEFAULT")), member, (guildData.language || "english").substr(0, 2), null);
+                const formattedMessage = this.client.functions.formatMessage(
+                    (joinDM.unknownMessage || member.guild.translate("misc:JOIN_DM_UNKNOWN_DEFAULT")),
+                    member,
+                    null,
+                    (guildSettings.language || "english").substr(0, 2),
+                    null
+                );
                 member.send(formattedMessage).catch(() => {});
             }
         }
 
+        const join = guildPlugins.find((plugin) => plugin.pluginName === "join")?.pluginData;
         // Join messages
-        if (guildData.join.enabled && guildData.join.mainMessage && guildData.join.channel){
-            const channel = member.guild.channels.cache.get(guildData.join.channel);
+        if (join?.enabled && join.mainMessage && join.channel){
+            logMessage += "Join: true\n";
+            const channel = member.guild.channels.cache.get(join.channel);
             if (!channel) return;
+            logMessage += "Join: sent\n";
             if (invite){
-                const formattedMessage = this.client.functions.formatMessage(guildData.join.mainMessage, member, (guildData.language || "english").substr(0, 2), {
-                    inviter,
-                    inviterData,
-                    invite,
-                    numJoins: memberData.numJoins
-                });
+                const formattedMessage = this.client.functions.formatMessage(
+                    join.mainMessage,
+                    member,
+                    memberNumJoins,
+                    (guildSettings.language || "english").substr(0, 2),
+                    {
+                        inviter,
+                        inviterData,
+                        invite
+                    });
                 channel.send(formattedMessage);
             } else if (vanity){
-                const formattedMessage = this.client.functions.formatMessage((guildData.join.vanityMessage || member.guild.translate("misc:JOIN_VANITY_DEFAULT")), member, (guildData.language || "english").substr(0, 2), null);
+                const formattedMessage = this.client.functions.formatMessage(
+                    (join.vanityMessage || member.guild.translate("misc:JOIN_VANITY_DEFAULT")),
+                    member,
+                    null,
+                    (guildSettings.language || "english").substr(0, 2),
+                    null
+                );
                 channel.send(formattedMessage);
             } else if (oauth){
-                const formattedMessage = this.client.functions.formatMessage((guildData.join.oauth2Message || member.guild.translate("misc:JOIN_OAUTH2_DEFAULT")), member, (guildData.language || "english").substr(0, 2), null);
+                const formattedMessage = this.client.functions.formatMessage(
+                    (join.oauth2Message || member.guild.translate("misc:JOIN_OAUTH2_DEFAULT")),
+                    member,
+                    null,
+                    (guildSettings.language || "english").substr(0, 2),
+                    null
+                );
                 channel.send(formattedMessage);
             } else if (perm){
                 channel.send(member.guild.translate("misc:JOIN_PERMISSIONS", {
                     user: member.user.toString()
                 }));
             } else {
-                const formattedMessage = this.client.functions.formatMessage((guildData.join.unknownMessage || member.guild.translate("misc:JOIN_UNKNOWN_DEFAULT")), member, (guildData.language || "english").substr(0, 2), null);
+                const formattedMessage = this.client.functions.formatMessage(
+                    (join.unknownMessage || member.guild.translate("misc:JOIN_UNKNOWN_DEFAULT")),
+                    member,
+                    null,
+                    (guildSettings.language || "english").substr(0, 2),
+                    null
+                );
                 channel.send(formattedMessage);
             }
         }
+        logMessage += `Time: ${Date.now()-startAt}ms\n`;
+        console.log(logMessage + "----------");
 
     }
 };

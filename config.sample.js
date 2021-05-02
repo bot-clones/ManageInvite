@@ -6,21 +6,6 @@ module.exports = {
         id: "XXXXXXXXXXX",
         token: "XXXXXXXXXXX"
     },
-    /* Emojis */
-    emojis: {
-        success:    "XXXXXXXXXXX",
-        error:      "XXXXXXXXXXX",
-        online:     "XXXXXXXXXXX",
-        dnd:        "XXXXXXXXXXX",
-        offline:    "XXXXXXXXXXX",
-        idle:       "XXXXXXXXXXX",
-        loading:    "XXXXXXXXXXX",
-        warn:       "XXXXXXXXXXX",
-        upgrade:    "XXXXXXXXXXX"
-    },
-    /* Embeds */
-    color:          "XXXXXXXXXXX",
-    footer:         "XXXXXXXXXXX",
     /* Logs */
     addLogs:        "XXXXXXXXXXX",
     removeLogs:     "XXXXXXXXXXX",
@@ -35,7 +20,6 @@ module.exports = {
     pswd:           "XXXXXXXXXXX",
     failureURL:     "https://docs.manage-invite.xyz",
     /* Other */
-    mongodb:        "XXXXXXXXXXX",
     discord:        "XXXXXXXXXXX",
     prefix:         "+",
     owners: [ "XXXXXXXXXXX", "XXXXXXXXXXX" ],
@@ -47,12 +31,15 @@ module.exports = {
     topToken: "XXXXXXXXXXX",
     topAuth: "XXXXXXXXXXX",
     /* Database */
-    database: {
+    postgres: {
         user: "",
         host: "localhost",
         database: "manage_invite",
         password: "",
         port: 5432
+    },
+    redis: {
+        user: ""
     },
     /* PayPal */
     paypal: {
@@ -75,102 +62,5 @@ module.exports = {
             fetchURL: "https://ipnpb.sandbox.paypal.com/cgi-bin/webscr?cmd=_notify-validate",
             pdtToken: "XXXXXXXXXXX"
         }
-    },
-    /* Language configuration */
-    enabledLanguages: [
-        {
-            name: "en-US",
-            nativeName: "English",
-            flag: ":flag_us:",
-            default: true,
-            aliases: [
-                "English",
-                "en",
-                "en-us",
-                "en_us",
-                "en_US"
-            ]
-        },
-        {
-            name: "fr-FR",
-            nativeName: "Français",
-            flag: ":flag_fr:",
-            default: false,
-            aliases: [
-                "French",
-                "français",
-                "francais",
-                "fr",
-                "fr_fr"
-            ]
-        },
-        {
-            name: "vi-VN",
-            nativeName: "Tiếng Việt",
-            flag: ":flag_vn:",
-            default: false,
-            aliases: [
-                "Vietnamese",
-                "Tieng Viet",
-                "vi",
-                "vi_vn"
-            ]
-        },
-        {
-            name: "hu-HU",
-            nativeName: "Magyar",
-            flag: ":flag_hu:",
-            default: false,
-            aliases: [
-                "Hungarian",
-                "hu",
-                "hu_hu"
-            ]
-        },
-        {
-            name: "tr-TR",
-            nativeName: "Türk",
-            flag: ":flag_tr:",
-            default: false,
-            aliases: [
-                "Turkish",
-                "Turk",
-                "tr",
-                "tr_tr"
-            ]
-        },
-        {
-            name: "pt-PT",
-            nativeName: "Português",
-            flag: ":flag_pt:",
-            default: false,
-            aliases: [
-                "Portuguese",
-                "pt",
-                "pt_pt"
-            ]
-        },
-        {
-            name: "bg-BG",
-            nativeName: "български",
-            flag: ":flag_bg:",
-            default: false,
-            aliases: [
-                "Bulgarian",
-                "bg",
-                "bg_bg"
-            ]
-        },
-        {
-            name: "ro-RO",
-            nativeName: "Română",
-            flag: ":flag_ro:",
-            default: false,
-            aliases: [
-                "Romanian",
-                "ro",
-                "ro_ro"
-            ]
-        }
-    ]
+    }
 };
